@@ -1,0 +1,107 @@
+/* Screenshot Filmstrip Component Styles */
+
+.filmstrip {
+  padding: var(--spacing-lg);
+  overflow-x: auto;
+  display: flex;
+  gap: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+}
+
+.filmstrip-list {
+  display: flex;
+  gap: var(--spacing-md);
+  list-style: none;
+}
+
+/* Filmstrip Thumbnail */
+.thumbnail {
+  flex-shrink: 0;
+  width: 120px;
+  height: 80px;
+  position: relative;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: var(--radius-lg);
+  border: 2px solid transparent;
+  overflow: hidden;
+  background-color: var(--color-bg-tertiary);
+}
+
+.thumbnail:hover {
+  transform: scale(1.05);
+  border-color: var(--color-accent);
+}
+
+.thumbnail-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnail-timestamp {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.thumbnail:hover .thumbnail-timestamp {
+  opacity: 1;
+}
+
+.thumbnail-index {
+  position: absolute;
+  top: var(--spacing-xs);
+  right: var(--spacing-xs);
+  background-color: var(--color-accent);
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.thumbnail:hover .thumbnail-index {
+  opacity: 1;
+}
+
+.thumbnail.active {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-bg-secondary), 0 0 0 4px var(--color-accent);
+}
+
+/* Empty Filmstrip */
+.filmstrip-empty {
+  width: 100%;
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* Responsive Filmstrip */
+@media (max-width: 768px) {
+  .filmstrip {
+    padding: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+  
+  .thumbnail {
+    width: 100px;
+    height: 70px;
+  }
+}

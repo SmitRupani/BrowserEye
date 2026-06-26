@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 
 interface RunStatusProps {
   status: 'idle' | 'running' | 'completed' | 'error';
@@ -6,7 +6,7 @@ interface RunStatusProps {
   finalScreenshot?: string;
 }
 
-export const RunStatus: React.FC<RunStatusProps> = ({ status, message, finalScreenshot }) => {
+export const RunStatus: FC<RunStatusProps> = ({ status, message }) => {
   return (
     <div className={`status-banner status-${status}`}>
       <div className="status-text">
