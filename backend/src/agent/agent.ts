@@ -17,15 +17,9 @@ export async function runAgent(
   const browserController = new BrowserController(runId);
   const toolExecutor = new ToolExecutor(browserController);
 
-  const maxSteps = config.maxSteps || 20;
-  const headless = config.headlessBrowser !== undefined ? config.headlessBrowser : true;
-  const LLM_BASE_URL = process.env.LLM_BASE_URL || 'http://localhost:11434/v1';
-  const LLM_API_KEY = process.env.LLM_API_KEY || 'ollama';
-  const LLM_MODEL = process.env.LLM_MODEL || 'llama3';
-
   const openai = new OpenAI({
-    baseURL: LLM_BASE_URL,
-    apiKey: LLM_API_KEY,
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: config.openRouterApiKey,
     defaultHeaders: {
       "HTTP-Referer": "http://localhost:3000",
       "X-Title": "BrowserMind Agent",
@@ -40,7 +34,7 @@ export async function runAgent(
       if (browserController.page) {
         const actions = new BrowserActions(browserController.page);
         await actions.navigate_to_url(url);
-
+        
         const scRes = await browserController.takeScreenshot(0);
         let initialScreenshotUrl = scRes.success ? scRes.data : undefined;
         if (initialScreenshotUrl) {
@@ -78,7 +72,7 @@ export async function runAgent(
 
       console.log(`[Agent] Calling main model for step ${step}...`);
       const response = await openai.chat.completions.create({
-        model: config.LLM_MODEL || 'llama3.2:1b',
+        model: config.modelId,
         messages: messages,
         tools: toolDefinitions,
         tool_choice: "auto",
@@ -86,7 +80,7 @@ export async function runAgent(
       console.log(`[Agent] Main model responded for step ${step}.`);
 
       const message = response.choices[0].message;
-
+      
       // Emit reasoning if there's any text content
       if (message.content) {
         const reasoningEvent = {
@@ -104,10 +98,10 @@ export async function runAgent(
         for (const toolCall of message.tool_calls) {
           const toolName = toolCall.function?.name;
           console.log(`[Step ${step}] ${toolName || 'undefined_tool'} ${toolCall.function?.arguments || ''}`);
-
+          
           let args = {};
           let result: any;
-
+          
           if (!toolName) {
             result = { success: false, error: "You provided an undefined tool. If you are finished, stop calling tools and just output 'TASK_COMPLETED'." };
           } else {
@@ -118,27 +112,27 @@ export async function runAgent(
               result = { success: false, error: 'Invalid tool arguments JSON: ' + err.message };
             }
           }
-
+          
           let screenshotUrl;
           let toolResultContent: any = JSON.stringify(result);
 
           if (toolName && toolName !== 'take_screenshot' && toolName !== 'open_browser' && toolName !== 'extract_html' && toolName !== 'analyze_vision') {
-            const scRes = await browserController.takeScreenshot(step);
-            if (scRes.success) {
-              screenshotUrl = scRes.data;
-            }
+             const scRes = await browserController.takeScreenshot(step);
+             if (scRes.success) {
+               screenshotUrl = scRes.data;
+             }
           } else if (toolName === 'analyze_page_structure' && result.success) {
-            screenshotUrl = result.data;
-            const mapping = result.mapping;
-            console.log(`[Agent] Returning full-page DOM mapping to main model...`);
-            toolResultContent = JSON.stringify({
-              success: true,
-              message: "Page structure mapped successfully. Use the provided ID mapping to find the correct element.",
-              data: screenshotUrl,
-              mapping: mapping
-            });
+             screenshotUrl = result.data;
+             const mapping = result.mapping;
+             console.log(`[Agent] Returning full-page DOM mapping to main model...`);
+             toolResultContent = JSON.stringify({
+                 success: true,
+                 message: "Page structure mapped successfully. Use the provided ID mapping to find the correct element.",
+                 data: screenshotUrl,
+                 mapping: mapping
+             });
           } else if (toolName === 'take_screenshot') {
-            screenshotUrl = result.data;
+             screenshotUrl = result.data;
           }
 
           const { mapping, ...sanitizedResult } = result;
@@ -151,7 +145,7 @@ export async function runAgent(
             screenshotUrl,
             timestamp: new Date().toISOString()
           };
-
+          
           emit(stepEvent);
           logger.logStep({ step, ...stepEvent });
 
@@ -191,13 +185,13 @@ export async function runAgent(
           }, { timeout: 45000 });
           finalScript = scriptResponse.choices[0].message.content || '';
         } catch (scriptErr) {
-          console.error("Failed to generate script:", scriptErr);
+           console.error("Failed to generate script:", scriptErr);
         }
 
-        const doneEvent = {
-          type: 'done',
-          message: (message.content || 'Task completed.') + (finalScript ? '\n\n### Generated Playwright Script\n```typescript\n' + finalScript + '\n```' : ''),
-          timestamp: new Date().toISOString()
+        const doneEvent = { 
+          type: 'done', 
+          message: (message.content || 'Task completed.') + (finalScript ? '\n\n### Generated Playwright Script\n```typescript\n' + finalScript + '\n```' : ''), 
+          timestamp: new Date().toISOString() 
         };
         emit(doneEvent);
         logger.logStep({ step, ...doneEvent });
